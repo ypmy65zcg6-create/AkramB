@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AI Safety">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>AI Safety Monitor</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#070b12;color:#f3f6fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif}
+header{padding:18px 16px 10px;display:flex;justify-content:space-between;align-items:center;background:#0b1220;position:sticky;top:0;z-index:5}
+h1{font-size:20px;margin:0}.sub{font-size:12px;color:#9ba8b8;margin-top:4px}
+.status{font-size:12px;padding:7px 10px;border-radius:999px;background:#172235;color:#a9b8ca}
+main{padding:12px 12px 28px;max-width:900px;margin:auto}
+.camera{position:relative;background:#000;border-radius:18px;overflow:hidden;aspect-ratio:9/16;max-height:70vh;box-shadow:0 10px 35px #0008}
+video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+canvas{display:none}.overlay{position:absolute;inset:0;pointer-events:none}
+.box{position:absolute;border:3px solid;border-radius:10px;padding:4px 7px;font-size:12px;font-weight:700;background:#0009}
+.safe{border-color:#31d17c;color:#6ff0a7}.danger{border-color:#ff4d5d;color:#ff7883}.warn{border-color:#ffc857;color:#ffd77c}
+.panel{margin-top:12px;background:#0d1523;border:1px solid #1d2b40;border-radius:16px;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:700;font-size:14px;background:#1677ff;color:white}.btn.secondary{background:#1a2638}.btn.danger{background:#c92f42;color:white;border:0}
+.alert{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;margin-top:8px;background:#151f2e}.dot{width:10px;height:10px;border-radius:50%;background:#31d17c}.dot.red{background:#ff4d5d}.dot.yellow{background:#ffc857}
+.small{font-size:12px;color:#9ba8b8;line-height:1.7}.title{font-weight:800;margin-bottom:8px}
+footer{text-align:center;color:#68778b;font-size:11px;margin-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>AI Safety Monitor</h1><div class="sub">مراقبة السلامة — النسخة الأولية</div></div>
+  <div id="status" class="status">جاهز</div>
+</header>
+<main>
+  <div class="camera">
+    <video id="video" autoplay playsinline muted></video>
+    <div id="overlay" class="overlay"></div>
+  </div>
+  <div class="panel">
+    <div class="title">تحليل الكاميرا</div>
+    <div class="small">هذه النسخة الأولية تشغّل كاميرا الهاتف وتجهّز واجهة كشف السلامة. التعرف المتقدم على الخوذة، النار، الدخان والمواد يحتاج نموذج AI فعلي سيتم ربطه في المرحلة التالية.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="start">تشغيل الكاميرا</button>
+      <button class="btn secondary" id="stop">إيقاف</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="title">الحالة الحالية</div>
+    <div id="events">
+      <div class="alert"><span class="dot"></span><span>لا توجد مخالفة مكتشفة حاليًا.</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="title">المراحل القادمة</div>
+    <div class="small">
+      1) كشف الأشخاص ومعدات الوقاية PPE<br>
+      2) كشف النار والدخان ومناطق الخطر<br>
+      3) OCR لقراءة أسماء المواد والملصقات<br>
+      4) تصنيف المواد حسب قاعدة بيانات السلامة/GHS<br>
+      5) حفظ الأحداث مع التاريخ والوقت والصورة<br>
+      6) ربط النظام لاحقًا بـ NVR/VMS و500+ كاميرا
+    </div>
+  </div>
+  <footer>AI Safety Monitor — Prototype</footer>
+</main>
+<script>
+const video=document.getElementById('video'), statusEl=document.getElementById('status');
+let stream=null;
+async function startCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});
+    video.srcObject=stream; statusEl.textContent="الكاميرا تعمل";
+  }catch(e){
+    statusEl.textContent="لم يتم السماح بالكاميرا";
+    alert("يجب السماح للمتصفح بالوصول إلى الكاميرا. إذا فتحت الصفحة من ملف محلي فلن تعمل الكاميرا؛ استخدم رابط HTTPS.");
+  }
+}
+function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} video.srcObject=null;statusEl.textContent="متوقف";}
+document.getElementById('start').onclick=startCamera;
+document.getElementById('stop').onclick=stopCamera;
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+</script>
+</body>
+</html>
